@@ -25,31 +25,34 @@ def handle_message(update, context):
     message = update.message
     chat_id = message.chat_id
 
-    context.bot.send_chat_action(chat_id=chat_id, action=ChatAction.TYPING)
-    context.bot.delete_message(message_id=message.message_id, chat_id=chat_id)
-    keyboard = [[InlineKeyboardButton("👍", callback_data="thumbs_up")]]
-    markup = InlineKeyboardMarkup(keyboard)
+    try:
+        context.bot.send_chat_action(chat_id=chat_id, action=ChatAction.TYPING)
+        context.bot.delete_message(message_id=message.message_id, chat_id=chat_id)
+        keyboard = [[InlineKeyboardButton("👍", callback_data="thumbs_up")]]
+        markup = InlineKeyboardMarkup(keyboard)
 
-    if message.text:
-        text = message.text
-        context.bot.send_message(chat_id=chat_id, text=text, reply_markup=markup)
-        return
-    elif message.caption:
-        text = message.caption
-    else:
-        text = None
+        if message.text:
+            text = message.text
+            context.bot.send_message(chat_id=chat_id, text=text, reply_markup=markup)
+            return
+        elif message.caption:
+            text = message.caption
+        else:
+            text = None
 
-    if message.photo:
-        context.bot.send_photo(chat_id=chat_id, photo=message.photo[-1], caption=text, reply_markup=markup)
-    elif message.document:
-        document = message.document.file_id
-        context.bot.send_document(chat_id=chat_id, caption=text, document=document, reply_markup=markup)
-    elif message.video:
-        video = message.video.file_id
-        context.bot.send_video(chat_id=chat_id, caption=text, video=video, reply_markup=markup)
-    elif message.audio:
-        audio = message.audio.file_id
-        context.bot.send_audio(chat_id=chat_id, caption=text, audio=audio, reply_markup=markup)
+        if message.photo:
+            context.bot.send_photo(chat_id=chat_id, photo=message.photo[-1].file_id, caption=text, reply_markup=markup)
+        elif message.document:
+            document = message.document.file_id
+            context.bot.send_document(chat_id=chat_id, caption=text, document=document, reply_markup=markup)
+        elif message.video:
+            video = message.video.file_id
+            context.bot.send_video(chat_id=chat_id, caption=text, video=video, reply_markup=markup)
+        elif message.audio:
+            audio = message.audio.file_id
+            context.bot.send_audio(chat_id=chat_id, caption=text, audio=audio, reply_markup=markup)
+    except Exception as ex:
+        context.bot.send_message(chat_id=chat_id, text=str(ex))
 
 
 def handle_reaction(update, context):
