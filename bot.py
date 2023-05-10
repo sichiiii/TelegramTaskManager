@@ -1,7 +1,7 @@
-import io
 import os
 import logging
 
+from time import sleep
 from dotenv import load_dotenv
 from telegram import ChatAction, InlineKeyboardMarkup, InlineKeyboardButton
 from telegram.ext import Updater, MessageHandler, Filters, CallbackQueryHandler, CommandHandler
@@ -98,4 +98,7 @@ dispatcher.add_handler(MessageHandler(Filters.text | Filters.photo | Filters.doc
 dispatcher.add_handler(CallbackQueryHandler(handle_reaction))
 dispatcher.add_handler(CommandHandler("start", start))
 
-updater.start_polling()
+
+while True:
+    updater.start_polling()
+    sleep(3)
