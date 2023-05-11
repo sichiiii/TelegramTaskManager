@@ -1,5 +1,8 @@
 import os
+import time
+import sched
 import logging
+import datetime
 
 from time import sleep
 from dotenv import load_dotenv
@@ -10,6 +13,7 @@ from telegram.ext import Updater, MessageHandler, Filters, CallbackQueryHandler,
 load_dotenv()
 logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s', level=logging.INFO)
 logger = logging.getLogger(__name__)
+scheduler = sched.scheduler(time.time, time.sleep)
 
 
 def start(update, context):
@@ -33,6 +37,13 @@ def handle_message(update, context):
 
         if message.text:
             text = message.text
+            reply_to = message.reply_to_message
+            if reply_to and message.text.isdigit():
+                now = time.time()
+                scheduled_time = now + int(message.text)
+                scheduler.enterabs(scheduled_time, priority=1, action=send_scheduled_message, argument=((chat_id, reply_to.text, markup, reply_to.message_id),))
+                scheduler.run()
+                return
             context.bot.send_message(chat_id=chat_id, text=text, reply_markup=markup)
             return
         elif message.caption:
@@ -53,6 +64,12 @@ def handle_message(update, context):
             context.bot.send_audio(chat_id=chat_id, caption=text, audio=audio, reply_markup=markup)
     except Exception as ex:
         context.bot.send_message(chat_id=chat_id, text=str(ex))
+
+
+def send_scheduled_message(context):
+    chat_id, text, markup, message_id = context
+    updater.bot.delete_message(chat_id=chat_id, message_id=message_id)
+    updater.bot.send_message(chat_id=chat_id, text=text, reply_markup=markup)
 
 
 def handle_reaction(update, context):
