@@ -40,7 +40,7 @@ def handle_message(update, context):
             reply_to = message.reply_to_message
             if reply_to and message.text.isdigit():
                 now = time.time()
-                scheduled_time = now + int(message.text)
+                scheduled_time = now + int(message.text) * 3600
                 scheduler.enterabs(scheduled_time, priority=1, action=send_scheduled_message, argument=((chat_id, reply_to.text, markup, reply_to.message_id),))
                 scheduler.run()
                 return
