@@ -2,15 +2,13 @@ import os
 import time
 import sched
 import logging
-import datetime
+import threading
 
 from time import sleep
-from dotenv import load_dotenv
 from telegram import ChatAction, InlineKeyboardMarkup, InlineKeyboardButton
 from telegram.ext import Updater, MessageHandler, Filters, CallbackQueryHandler, CommandHandler
 
 
-load_dotenv()
 logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s', level=logging.INFO)
 logger = logging.getLogger(__name__)
 scheduler = sched.scheduler(time.time, time.sleep)
@@ -42,10 +40,9 @@ def handle_message(update, context):
                 now = time.time()
                 scheduled_time = now + int(message.text) * 3600
                 scheduler.enterabs(scheduled_time, priority=1, action=send_scheduled_message, argument=((chat_id, reply_to.text, markup, reply_to.message_id),))
-                scheduler.run()
-                return
-            context.bot.send_message(chat_id=chat_id, text=text, reply_markup=markup)
-            return
+                threading.Thread(target=scheduler.run).start()
+            else:
+                context.bot.send_message(chat_id=chat_id, text=text, reply_markup=markup)
         elif message.caption:
             text = message.caption
         else:
@@ -68,7 +65,10 @@ def handle_message(update, context):
 
 def send_scheduled_message(context):
     chat_id, text, markup, message_id = context
-    updater.bot.delete_message(chat_id=chat_id, message_id=message_id)
+    try:
+        updater.bot.delete_message(chat_id=chat_id, message_id=message_id)
+    except:
+        pass
     updater.bot.send_message(chat_id=chat_id, text=text, reply_markup=markup)
 
 
@@ -82,7 +82,7 @@ def handle_reaction(update, context):
         context.bot.delete_message(chat_id=chat_id, message_id=message_id)
 
 
-updater = Updater(token=os.getenv('TOKEN'), use_context=True)
+updater = Updater(token=os.environ.get('TELEGRAM_TOKEN'), use_context=True)
 dispatcher = updater.dispatcher
 dispatcher.add_handler(MessageHandler(Filters.text | Filters.photo | Filters.document | Filters.video | Filters.audio, handle_message))
 dispatcher.add_handler(CallbackQueryHandler(handle_reaction))
