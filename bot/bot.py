@@ -23,24 +23,39 @@ def last_message_restore(update, context):
     pass
 
 
+def convert_to_number(message_text):
+    try:
+        try:
+            hours = float(message_text)
+            return hours
+        except ValueError:
+            hours = int(message_text)
+            return hours
+    except:
+        return
+
+
 def handle_message(update, context):
     message = update.message
     chat_id = message.chat_id
 
     try:
         context.bot.send_chat_action(chat_id=chat_id, action=ChatAction.TYPING)
-        context.bot.delete_message(message_id=message.message_id, chat_id=chat_id)
         keyboard = [[InlineKeyboardButton("🔥", callback_data="fire")]]
         markup = InlineKeyboardMarkup(keyboard)
-
         if message.text:
             text = message.text
             reply_to = message.reply_to_message
-            if reply_to and message.text.isdigit():
-                now = time.time()
-                scheduled_time = now + int(message.text) * 3600
-                scheduler.enterabs(scheduled_time, priority=1, action=send_scheduled_message, argument=((chat_id, reply_to.text, markup, reply_to.message_id),))
-                threading.Thread(target=scheduler.run).start()
+
+            if reply_to:
+                hours = convert_to_number(message.text)
+                if hours:
+                    now = time.time()
+                    scheduled_time = now + hours * 3600
+                    scheduler.enterabs(scheduled_time, priority=1, action=send_scheduled_message, argument=((chat_id, reply_to.text, markup, reply_to.message_id),))
+                    threading.Thread(target=scheduler.run).start()
+                else:
+                    return
             else:
                 context.bot.send_message(chat_id=chat_id, text=text, reply_markup=markup)
         elif message.caption:
@@ -59,6 +74,7 @@ def handle_message(update, context):
         elif message.audio:
             audio = message.audio.file_id
             context.bot.send_audio(chat_id=chat_id, caption=text, audio=audio, reply_markup=markup)
+        context.bot.delete_message(message_id=message.message_id, chat_id=chat_id)
     except Exception as ex:
         context.bot.send_message(chat_id=chat_id, text=str(ex))
 
